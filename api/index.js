@@ -31,23 +31,39 @@ app.use(notFound);
 app.use(errorHandler);
 
 let dbConnected = false;
+let dbPromise = null;
 
-const handler = async (req, res) => {
-  try {
-    if (!dbConnected) {
-      await connectDB();
-      dbConnected = true;
-    }
-    return app(req, res);
-  } catch (error) {
-    console.error("API handler error:", error);
-    if (!res.headersSent) {
-      res.status(500).json({
-        message: "Internal server error",
-        error: process.env.NODE_ENV === "development" ? error.message : undefined,
+const handler = (req, res) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Ensure DB is connected only once
+      if (!dbConnected && !dbPromise) {
+        dbPromise = connectDB();
+      }
+      
+      if (dbPromise && !dbConnected) {
+        await dbPromise;
+        dbConnected = true;
+      }
+
+      // Handle the request with Express
+      app(req, res, (err) => {
+        if (err) {
+          console.error("Express middleware error:", err);
+          if (!res.headersSent) {
+            res.status(500).json({ message: "Internal server error" });
+          }
+        }
+        resolve();
       });
+    } catch (error) {
+      console.error("API handler error:", error);
+      if (!res.headersSent) {
+        res.status(500).json({ message: "Internal server error" });
+      }
+      reject(error);
     }
-  }
+  });
 };
 
 export default handler;
