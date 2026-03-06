@@ -1,0 +1,20 @@
+{
+  "name": "testnova-tests",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "vitest",
+    "test:frontend": "vitest tests/frontend.test.js",
+    "test:backend": "vitest tests/backend.test.js",
+    "test:security": "node tests/security.test.js",
+    "test:coverage": "vitest --coverage"
+  },
+  "devDependencies": {
+    "@vitest/ui": "^1.0.0",
+    "vitest": "^1.0.0",
+    "@vue/test-utils": "^2.4.0",
+    "pinia": "^3.0.0",
+    "vue": "^3.5.0",
+    "@vitest/coverage-v8": "^1.0.0"
+  }
+}

@@ -5,7 +5,7 @@ export const usePromptStore = defineStore("prompts", {
   state: () => ({
     prompts: [],
     activePrompt: null,
-    latestResponse: "",
+    chatHistory: [], // Array to keep all responses
     loading: false,
     pagination: {
       page: 1,
@@ -14,12 +14,21 @@ export const usePromptStore = defineStore("prompts", {
       totalPages: 1,
     },
   }),
+  getters: {
+    latestResponse: (state) => state.chatHistory.length > 0 ? state.chatHistory[state.chatHistory.length - 1].response : "",
+  },
   actions: {
     async submitPrompt(prompt) {
       this.loading = true;
       try {
         const { data } = await api.post("/prompts", { prompt });
-        this.latestResponse = data.response;
+        // Add to chat history instead of replacing
+        this.chatHistory.push({
+          prompt: data.prompt,
+          response: data.response,
+          _id: data._id,
+          createdAt: data.createdAt,
+        });
         return data;
       } finally {
         this.loading = false;
@@ -47,9 +56,14 @@ export const usePromptStore = defineStore("prompts", {
     async deletePrompt(id) {
       await api.delete(`/prompts/${id}`);
       this.prompts = this.prompts.filter((item) => item._id !== id);
+      this.chatHistory = this.chatHistory.filter((item) => item._id !== id);
       if (this.activePrompt?._id === id) {
         this.activePrompt = null;
       }
     },
+    clearChatHistory() {
+      this.chatHistory = [];
+    },
   },
 });
+

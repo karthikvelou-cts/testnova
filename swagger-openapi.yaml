@@ -1,0 +1,345 @@
+openapi: 3.0.0
+info:
+  title: TestNova AI Chat API
+  description: Complete API documentation for TestNova - AI Chat Application with Ollama
+  version: 1.0.0
+  contact:
+    name: TestNova Support
+    email: support@testnova.com
+  license:
+    name: MIT
+
+servers:
+  - url: https://testnovatool.vercel.app
+    description: Production server
+  - url: http://localhost:5000
+    description: Development server
+
+paths:
+  /api/health:
+    get:
+      summary: Health Check
+      description: Check if the API is running and healthy
+      tags:
+        - System
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /api/auth/register:
+    post:
+      summary: Register a new user
+      description: Create a new user account
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  example: John Doe
+                  minLength: 1
+                email:
+                  type: string
+                  format: email
+                  example: john@example.com
+                password:
+                  type: string
+                  minLength: 6
+                  example: securePassword123
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                        example: 507f1f77bcf86cd799439011
+                      name:
+                        type: string
+                      email:
+                        type: string
+                      createdAt:
+                        type: string
+                        format: date-time
+                  token:
+                    type: string
+                    description: JWT token for authentication
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /api/auth/login:
+    post:
+      summary: Login user
+      description: Authenticate user with email and password
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: john@example.com
+                password:
+                  type: string
+                  example: securePassword123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                      name:
+                        type: string
+                      email:
+                        type: string
+                      createdAt:
+                        type: string
+                        format: date-time
+                  token:
+                    type: string
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid credentials
+
+  /api/prompts:
+    get:
+      summary: Get user prompts
+      description: Retrieve paginated list of user's prompts
+      tags:
+        - Prompts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (default 1)
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page (default 10, max 50)
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Prompts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Prompt'
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                      totalPages:
+                        type: integer
+        '401':
+          description: Unauthorized
+
+    post:
+      summary: Create a new prompt
+      description: Submit a prompt and get AI response
+      tags:
+        - Prompts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - prompt
+              properties:
+                prompt:
+                  type: string
+                  minLength: 1
+                  example: Explain async/await in JavaScript
+      responses:
+        '201':
+          description: Prompt created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prompt'
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+
+  /api/prompts/{id}:
+    get:
+      summary: Get prompt by ID
+      description: Retrieve a specific prompt by its ID
+      tags:
+        - Prompts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Prompt ID (MongoDB ObjectId)
+          schema:
+            type: string
+            pattern: '^[a-f0-9]{24}$'
+      responses:
+        '200':
+          description: Prompt retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prompt'
+        '404':
+          description: Prompt not found
+        '401':
+          description: Unauthorized
+
+    delete:
+      summary: Delete a prompt
+      description: Delete a specific prompt by its ID
+      tags:
+        - Prompts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[a-f0-9]{24}$'
+      responses:
+        '200':
+          description: Prompt deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Prompt deleted
+        '404':
+          description: Prompt not found
+        '401':
+          description: Unauthorized
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: MongoDB ObjectId
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          description: Hashed password (not returned in responses)
+        createdAt:
+          type: string
+          format: date-time
+
+    Prompt:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: MongoDB ObjectId
+        userId:
+          type: string
+          description: User ID who created the prompt
+        prompt:
+          type: string
+          description: The user's prompt/question
+        response:
+          type: string
+          description: AI generated response
+        createdAt:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from login endpoint
+
+tags:
+  - name: System
+    description: System endpoints
+  - name: Authentication
+    description: User authentication endpoints
+  - name: Prompts
+    description: Prompt and AI response endpoints
