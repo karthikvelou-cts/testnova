@@ -2,7 +2,7 @@
 
 This repo is configured to deploy as:
 
-- Vue frontend from `client/` (built to `client/dist`)
+- Vue frontend from `client/` (built to root `dist` for Vercel)
 - Node/Express API as a Vercel Function from `api/index.js`
 
 ## Required Environment Variables (Vercel Project Settings)

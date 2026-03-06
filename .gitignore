@@ -3,6 +3,7 @@ client/node_modules/
 server/node_modules/
 client/dist/
 .env
+.env.example
 .env.local
 .env.*.local
 server/.env
