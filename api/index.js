@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import axios from "axios";
 
 dotenv.config();
 
@@ -15,7 +16,29 @@ const userSchema = new mongoose.Schema(
   { timestamps: { createdAt: true, updatedAt: false } }
 );
 
+const promptSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    prompt: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    response: {
+      type: String,
+      required: true,
+    },
+  },
+  { timestamps: { createdAt: true, updatedAt: false } }
+);
+
 const User = mongoose.model("User", userSchema);
+const Prompt = mongoose.model("Prompt", promptSchema);
 
 // DB Connection
 let dbConnection = null;
@@ -40,6 +63,54 @@ function generateToken(userId) {
   return jwt.sign({ userId }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || "7d",
   });
+}
+
+// Auth Middleware
+async function authMiddleware(req) {
+  const authHeader = req.headers.authorization || "";
+
+  if (!authHeader.startsWith("Bearer ")) {
+    throw { status: 401, message: "Not authorized, token missing" };
+  }
+
+  try {
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId).select("-password");
+    if (!user) {
+      throw { status: 401, message: "User not found" };
+    }
+    return user;
+  } catch (error) {
+    throw { status: 401, message: "Not authorized, token invalid" };
+  }
+}
+
+// Ollama Client
+async function sendPromptToOllama(prompt) {
+  const headers = { "Content-Type": "application/json" };
+
+  if (process.env.OLLAMA_API_KEY) {
+    headers.Authorization = `Bearer ${process.env.OLLAMA_API_KEY}`;
+  }
+
+  const payload = {
+    model: process.env.OLLAMA_MODEL || "devstral-small-2:24b",
+    messages: [{ role: "user", content: prompt }],
+    stream: false,
+    options: {
+      temperature: 0.2,
+      num_predict: 300
+    }
+  };
+
+  const { data } = await axios.post(
+    process.env.OLLAMA_API_URL || "https://ollama.com/api/chat",
+    payload,
+    { headers, timeout: 120000 }
+  );
+
+  return data?.message?.content || data?.response || "No response from model.";
 }
 
 // Handler
@@ -122,6 +193,84 @@ export default async (req, res) => {
         },
         token: generateToken(user._id),
       });
+    }
+
+    // Prompts endpoints - require auth
+    if (req.url.startsWith("/api/prompts")) {
+      try {
+        const user = await authMiddleware(req);
+
+        // GET /api/prompts - list prompts
+        if (req.url === "/api/prompts" && req.method === "GET") {
+          const page = Math.max(parseInt(req.query?.page || "1", 10), 1);
+          const limit = Math.min(Math.max(parseInt(req.query?.limit || "10", 10), 1), 50);
+          const skip = (page - 1) * limit;
+
+          const [items, total] = await Promise.all([
+            Prompt.find({ userId: user._id }).sort({ createdAt: -1 }).skip(skip).limit(limit),
+            Prompt.countDocuments({ userId: user._id }),
+          ]);
+
+          return res.status(200).json({
+            items,
+            pagination: {
+              page,
+              limit,
+              total,
+              totalPages: Math.max(Math.ceil(total / limit), 1),
+            },
+          });
+        }
+
+        // POST /api/prompts - create prompt
+        if (req.url === "/api/prompts" && req.method === "POST") {
+          const { prompt } = req.body || {};
+
+          if (!prompt || !prompt.trim?.()) {
+            return res.status(400).json({ message: "Prompt is required" });
+          }
+
+          const aiResponse = await sendPromptToOllama(prompt.trim());
+
+          const savedPrompt = await Prompt.create({
+            userId: user._id,
+            prompt: prompt.trim(),
+            response: aiResponse,
+          });
+
+          return res.status(201).json(savedPrompt);
+        }
+
+        // GET /api/prompts/:id - get prompt by id
+        const promptIdMatch = req.url.match(/^\/api\/prompts\/([a-f0-9]{24})$/);
+        if (promptIdMatch && req.method === "GET") {
+          const promptId = promptIdMatch[1];
+          const prompt = await Prompt.findOne({ _id: promptId, userId: user._id });
+
+          if (!prompt) {
+            return res.status(404).json({ message: "Prompt not found" });
+          }
+
+          return res.status(200).json(prompt);
+        }
+
+        // DELETE /api/prompts/:id - delete prompt
+        if (promptIdMatch && req.method === "DELETE") {
+          const promptId = promptIdMatch[1];
+          const prompt = await Prompt.findOneAndDelete({ _id: promptId, userId: user._id });
+
+          if (!prompt) {
+            return res.status(404).json({ message: "Prompt not found" });
+          }
+
+          return res.status(200).json({ message: "Prompt deleted" });
+        }
+      } catch (authError) {
+        if (authError.status) {
+          return res.status(authError.status).json({ message: authError.message });
+        }
+        throw authError;
+      }
     }
 
     // 404
