@@ -1,27 +1,22 @@
 <template>
-  <div class="flex min-h-screen items-center justify-center p-4">
-    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg">
-      <h2 class="mb-5 text-2xl font-bold">Login</h2>
-      <form class="space-y-4" @submit.prevent="onSubmit">
-        <input v-model="form.email" type="email" placeholder="Email" class="w-full rounded-lg border px-3 py-2" />
-        <input v-model="form.password" type="password" placeholder="Password" class="w-full rounded-lg border px-3 py-2" />
-        <button class="flex w-full items-center justify-center rounded-lg bg-slate-900 px-3 py-2 font-semibold text-white">
-          <LoaderSpinner v-if="authStore.loading" />
-          <span v-else>Login</span>
-        </button>
-      </form>
-      <p class="mt-4 text-sm">
-        New user?
-        <RouterLink class="font-semibold text-blue-600" to="/register">Register</RouterLink>
-      </p>
-    </div>
-  </div>
+  <AuthForm
+    title="Welcome Back"
+    subtitle="Login to your account and continue"
+    :show-name="false"
+    button-text="Login"
+    footer-text="Don't have an account? "
+    footer-link="/register"
+    footer-link-text="Sign up"
+    :loading="authStore.loading"
+    :model-value="form"
+    @submit="onSubmit"
+  />
 </template>
 
 <script setup>
 import { reactive } from "vue";
 import { useRouter } from "vue-router";
-import LoaderSpinner from "../components/LoaderSpinner.vue";
+import AuthForm from "../components/AuthForm.vue";
 import { useToast } from "../composables/useToast";
 import { useAuthStore } from "../store/auth";
 

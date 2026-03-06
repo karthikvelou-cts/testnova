@@ -1,28 +1,22 @@
 <template>
-  <div class="flex min-h-screen items-center justify-center p-4">
-    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg">
-      <h2 class="mb-5 text-2xl font-bold">Create Account</h2>
-      <form class="space-y-4" @submit.prevent="onSubmit">
-        <input v-model="form.name" type="text" placeholder="Name" class="w-full rounded-lg border px-3 py-2" />
-        <input v-model="form.email" type="email" placeholder="Email" class="w-full rounded-lg border px-3 py-2" />
-        <input v-model="form.password" type="password" placeholder="Password" class="w-full rounded-lg border px-3 py-2" />
-        <button class="flex w-full items-center justify-center rounded-lg bg-slate-900 px-3 py-2 font-semibold text-white">
-          <LoaderSpinner v-if="authStore.loading" />
-          <span v-else>Register</span>
-        </button>
-      </form>
-      <p class="mt-4 text-sm">
-        Already have an account?
-        <RouterLink class="font-semibold text-blue-600" to="/login">Login</RouterLink>
-      </p>
-    </div>
-  </div>
+  <AuthForm
+    title="Create Account"
+    subtitle="Join us and get started"
+    :show-name="true"
+    button-text="Register"
+    footer-text="Already have an account? "
+    footer-link="/login"
+    footer-link-text="Sign in"
+    :loading="authStore.loading"
+    :model-value="form"
+    @submit="onSubmit"
+  />
 </template>
 
 <script setup>
 import { reactive } from "vue";
 import { useRouter } from "vue-router";
-import LoaderSpinner from "../components/LoaderSpinner.vue";
+import AuthForm from "../components/AuthForm.vue";
 import { useToast } from "../composables/useToast";
 import { useAuthStore } from "../store/auth";
 

@@ -7,18 +7,22 @@
         <LoaderSpinner v-if="promptStore.loading" />
       </div>
 
-      <div v-if="promptStore.activePrompt" class="space-y-5">
+      <div v-if="promptStore.activePrompt" class="space-y-6">
         <div>
-          <h3 class="mb-2 text-lg font-semibold">Prompt</h3>
-          <p class="whitespace-pre-wrap rounded-lg bg-slate-100 p-4">{{ promptStore.activePrompt.prompt }}</p>
+          <h3 class="mb-3 text-lg font-semibold">Prompt</h3>
+          <div class="rounded-lg bg-blue-50 border border-blue-200 p-4">
+            <p class="whitespace-pre-wrap text-slate-700 leading-relaxed">{{ promptStore.activePrompt.prompt }}</p>
+          </div>
         </div>
 
         <div>
-          <h3 class="mb-2 text-lg font-semibold">AI Response</h3>
-          <p class="whitespace-pre-wrap rounded-lg bg-slate-100 p-4">{{ promptStore.activePrompt.response }}</p>
+          <h3 class="mb-4 text-lg font-semibold">AI Response</h3>
+          <div class="rounded-lg bg-slate-50 p-6">
+            <RichTextRenderer :content="promptStore.activePrompt.response" />
+          </div>
         </div>
 
-        <p class="text-sm text-slate-500">Created: {{ formatDate(promptStore.activePrompt.createdAt) }}</p>
+        <p class="text-xs text-slate-500 pt-4 border-t">Created: {{ formatDate(promptStore.activePrompt.createdAt) }}</p>
       </div>
     </main>
   </div>
@@ -29,6 +33,7 @@ import { onMounted } from "vue";
 import { useRoute } from "vue-router";
 import LoaderSpinner from "../components/LoaderSpinner.vue";
 import SidebarNav from "../components/SidebarNav.vue";
+import RichTextRenderer from "../components/RichTextRenderer.vue";
 import { useToast } from "../composables/useToast";
 import { usePromptStore } from "../store/prompts";
 

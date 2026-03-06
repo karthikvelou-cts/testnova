@@ -125,8 +125,13 @@ export default async (req, res) => {
   }
 
   try {
+    // Parse URL and query parameters
+    const url = new URL(req.url || "/", "http://localhost");
+    const pathname = url.pathname;
+    const searchParams = url.searchParams;
+
     // Health check - doesn't need DB
-    if (req.url === "/api/health" && req.method === "GET") {
+    if (pathname === "/api/health" && req.method === "GET") {
       return res.status(200).json({ status: "ok" });
     }
 
@@ -134,7 +139,7 @@ export default async (req, res) => {
     await connectDB();
 
     // Register endpoint
-    if (req.url === "/api/auth/register" && req.method === "POST") {
+    if (pathname === "/api/auth/register" && req.method === "POST") {
       const { name, email, password } = req.body || {};
 
       if (!name || !email || !password) {
@@ -167,7 +172,7 @@ export default async (req, res) => {
     }
 
     // Login endpoint
-    if (req.url === "/api/auth/login" && req.method === "POST") {
+    if (pathname === "/api/auth/login" && req.method === "POST") {
       const { email, password } = req.body || {};
 
       if (!email || !password) {
@@ -196,14 +201,14 @@ export default async (req, res) => {
     }
 
     // Prompts endpoints - require auth
-    if (req.url.startsWith("/api/prompts")) {
+    if (pathname.startsWith("/api/prompts")) {
       try {
         const user = await authMiddleware(req);
 
         // GET /api/prompts - list prompts
-        if (req.url === "/api/prompts" && req.method === "GET") {
-          const page = Math.max(parseInt(req.query?.page || "1", 10), 1);
-          const limit = Math.min(Math.max(parseInt(req.query?.limit || "10", 10), 1), 50);
+        if (pathname === "/api/prompts" && req.method === "GET") {
+          const page = Math.max(parseInt(searchParams.get("page") || "1", 10), 1);
+          const limit = Math.min(Math.max(parseInt(searchParams.get("limit") || "10", 10), 1), 50);
           const skip = (page - 1) * limit;
 
           const [items, total] = await Promise.all([
@@ -223,7 +228,7 @@ export default async (req, res) => {
         }
 
         // POST /api/prompts - create prompt
-        if (req.url === "/api/prompts" && req.method === "POST") {
+        if (pathname === "/api/prompts" && req.method === "POST") {
           const { prompt } = req.body || {};
 
           if (!prompt || !prompt.trim?.()) {
@@ -242,7 +247,7 @@ export default async (req, res) => {
         }
 
         // GET /api/prompts/:id - get prompt by id
-        const promptIdMatch = req.url.match(/^\/api\/prompts\/([a-f0-9]{24})$/);
+        const promptIdMatch = pathname.match(/^\/api\/prompts\/([a-f0-9]{24})$/);
         if (promptIdMatch && req.method === "GET") {
           const promptId = promptIdMatch[1];
           const prompt = await Prompt.findOne({ _id: promptId, userId: user._id });

@@ -21,9 +21,9 @@
         </button>
       </form>
 
-      <section v-if="promptStore.latestResponse" class="mt-6 rounded-xl bg-slate-50 p-4">
-        <h3 class="mb-2 text-lg font-semibold">AI Response</h3>
-        <p class="whitespace-pre-wrap text-sm text-slate-800">{{ promptStore.latestResponse }}</p>
+      <section v-if="promptStore.latestResponse" class="mt-6 rounded-xl bg-slate-50 p-6">
+        <h3 class="mb-4 text-lg font-semibold">AI Response</h3>
+        <RichTextRenderer :content="promptStore.latestResponse" />
       </section>
     </main>
   </div>
@@ -33,6 +33,7 @@
 import { ref } from "vue";
 import LoaderSpinner from "../components/LoaderSpinner.vue";
 import SidebarNav from "../components/SidebarNav.vue";
+import RichTextRenderer from "../components/RichTextRenderer.vue";
 import { useToast } from "../composables/useToast";
 import { usePromptStore } from "../store/prompts";
 
