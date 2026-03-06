@@ -1,5 +1,5 @@
 {
-  "name": "automation-tools",
+  "name": "testnova",
   "private": true,
   "workspaces": [
     "client",
