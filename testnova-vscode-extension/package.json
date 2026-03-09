@@ -1,0 +1,137 @@
+{
+  "name": "testnova-vscode-extension",
+  "displayName": "TestNova",
+  "description": "Generate unit tests and test cases from code using TestNova API.",
+  "version": "1.0.0",
+  "publisher": "testnova",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Testing"
+  ],
+  "activationEvents": [
+    "onCommand:testnova.generateTests",
+    "onCommand:testnova.generateFromSelection",
+    "onCommand:testnova.setApiBaseUrl",
+    "onCommand:testnova.setToken",
+    "onCommand:testnova.clearToken"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "testnova.generateTests",
+        "title": "TestNova: Generate Unit Tests"
+      },
+      {
+        "command": "testnova.generateFromSelection",
+        "title": "TestNova: Generate Tests from Selection"
+      },
+      {
+        "command": "testnova.setApiBaseUrl",
+        "title": "TestNova: Set API Base URL"
+      },
+      {
+        "command": "testnova.setToken",
+        "title": "TestNova: Set Auth Token"
+      },
+      {
+        "command": "testnova.clearToken",
+        "title": "TestNova: Clear Auth Token"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "testnova.submenu",
+        "label": "TestNova"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "testnova.generateTests",
+          "group": "navigation@98",
+          "when": "explorerResourceIsFolder == false"
+        },
+        {
+          "submenu": "testnova.submenu",
+          "group": "navigation@99"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "testnova.generateFromSelection",
+          "group": "navigation@98",
+          "when": "editorHasSelection"
+        },
+        {
+          "submenu": "testnova.submenu",
+          "group": "navigation@99"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "testnova.generateTests"
+        },
+        {
+          "command": "testnova.generateFromSelection"
+        },
+        {
+          "command": "testnova.setApiBaseUrl"
+        },
+        {
+          "command": "testnova.setToken"
+        },
+        {
+          "command": "testnova.clearToken"
+        }
+      ],
+      "testnova.submenu": [
+        {
+          "command": "testnova.generateTests",
+          "group": "1_generate"
+        },
+        {
+          "command": "testnova.generateFromSelection",
+          "group": "1_generate"
+        },
+        {
+          "command": "testnova.setApiBaseUrl",
+          "group": "2_config"
+        },
+        {
+          "command": "testnova.setToken",
+          "group": "2_config"
+        },
+        {
+          "command": "testnova.clearToken",
+          "group": "2_config"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "TestNova",
+      "properties": {
+        "testnova.apiBaseUrl": {
+          "type": "string",
+          "default": "https://testnovatool.vercel.app/api",
+          "description": "Base API URL for TestNova backend."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "lint": "echo \"No lint configured\"",
+    "test": "echo \"No tests configured\"",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "axios": "^1.8.4"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^3.2.2",
+    "@types/node": "^20.17.0",
+    "@types/vscode": "^1.90.0"
+  }
+}

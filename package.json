@@ -4,12 +4,15 @@
   "type": "module",
   "workspaces": [
     "client",
-    "server"
+    "server",
+    "testnova-vscode-extension"
   ],
   "scripts": {
     "build": "npm run build --workspace client -- --outDir ../dist && echo 'Build completed'",
     "build:client": "npm run build --workspace client",
+    "build:extension": "npm run build --workspace testnova-vscode-extension",
     "dev:client": "npm run dev --workspace client",
-    "dev:server": "npm run dev --workspace server"
+    "dev:server": "npm run dev --workspace server",
+    "package:extension": "npm run package --workspace testnova-vscode-extension"
   }
 }
