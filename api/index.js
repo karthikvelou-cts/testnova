@@ -168,12 +168,16 @@ export default async (req, res) => {
           try {
             resolve(data ? JSON.parse(data) : {});
           } catch (e) {
+            console.error("JSON parse error:", e.message, "data:", data);
             resolve({});
           }
         });
         req.on("error", reject);
       });
     }
+
+    // Log for debugging
+    console.log(`${req.method} ${req.url}`, { bodyKeys: Object.keys(body) });
 
     // Parse URL and query parameters
     const url = new URL(req.url || "/", "http://localhost");
@@ -527,6 +531,8 @@ export default async (req, res) => {
     return res.status(404).json({ message: "Not found" });
   } catch (error) {
     console.error("Handler error:", error);
+    console.error("Error stack:", error.stack);
+    console.error("Error message:", error.message);
     return res.status(500).json({ 
       message: "Internal server error",
       error: process.env.NODE_ENV === "development" ? error.message : undefined,
