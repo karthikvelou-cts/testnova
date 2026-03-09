@@ -537,12 +537,14 @@ export default async (req, res) => {
         // GET /api/auth/profile - get current user profile
         if (pathname === "/api/auth/profile" && req.method === "GET") {
           return res.status(200).json({
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            plan: user.plan,
-            expiresAt: user.expiresAt,
-            createdAt: user.createdAt,
+            user: {
+              _id: user._id,
+              name: user.name,
+              email: user.email,
+              plan: user.plan,
+              expiresAt: user.expiresAt,
+              createdAt: user.createdAt,
+            },
           });
         }
 
@@ -658,16 +660,30 @@ export default async (req, res) => {
           const expiresAt = new Date();
           expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
-          await User.findByIdAndUpdate(user._id, {
-            plan: transaction.plan,
-            expiresAt,
-          });
+          const updatedUser = await User.findByIdAndUpdate(
+            user._id,
+            {
+              plan: transaction.plan,
+              expiresAt,
+            },
+            { new: true }
+          );
 
           return res.status(200).json({
             message: "Payment confirmed",
             plan: transaction.plan,
             expiresAt,
             transaction,
+            user: updatedUser
+              ? {
+                  _id: updatedUser._id,
+                  name: updatedUser.name,
+                  email: updatedUser.email,
+                  plan: updatedUser.plan,
+                  expiresAt: updatedUser.expiresAt,
+                  createdAt: updatedUser.createdAt,
+                }
+              : null,
           });
         }
 

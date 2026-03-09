@@ -247,7 +247,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../store/auth';
 import { useToast } from '../composables/useToast';
@@ -297,4 +297,8 @@ const upgradePlan = async (plan) => {
 
 const upgradeToSuperPlan = () => upgradePlan('super');
 const upgradeToPremiumPlan = () => upgradePlan('premium');
+
+onMounted(async () => {
+  await authStore.fetchProfile();
+});
 </script>

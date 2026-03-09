@@ -126,6 +126,16 @@ export const handlePaymentSuccess = async (req, res) => {
       plan: transaction.plan,
       expiresAt,
       transaction,
+      user: user
+        ? {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            plan: user.plan,
+            expiresAt: user.expiresAt,
+            createdAt: user.createdAt,
+          }
+        : null,
     });
   } catch (error) {
     console.error("Error handling payment success:", error);

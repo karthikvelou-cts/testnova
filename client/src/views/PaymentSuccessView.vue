@@ -111,8 +111,11 @@ onMounted(async () => {
     const data = await response.json();
     if (response.ok) {
       paymentData.value = data;
-      // Update auth store with new plan
-      if (authStore.user) {
+      // Always refresh profile so plan/status is consistent across pages
+      await authStore.fetchProfile();
+
+      // Immediate UI fallback before profile call resolves everywhere
+      if (authStore.user && data.plan) {
         authStore.user.plan = data.plan;
         authStore.user.expiresAt = data.expiresAt;
         localStorage.setItem("user", JSON.stringify(authStore.user));
