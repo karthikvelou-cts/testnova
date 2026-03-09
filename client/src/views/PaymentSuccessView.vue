@@ -6,6 +6,10 @@
 
       <h1 class="text-4xl font-bold">Payment Successful!</h1>
 
+      <div v-if="errorMessage" class="bg-rose-500/10 border border-rose-500/40 rounded-2xl p-4 text-rose-200">
+        {{ errorMessage }}
+      </div>
+
       <div v-if="!loading && paymentData" class="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 space-y-4">
         <div class="text-left space-y-3">
           <div class="flex justify-between">
@@ -69,6 +73,7 @@ const authStore = useAuthStore();
 
 const loading = ref(true);
 const paymentData = ref(null);
+const errorMessage = ref("");
 
 const formatDate = (date) => {
   return new Date(date).toLocaleDateString('en-US', {
@@ -82,13 +87,14 @@ onMounted(async () => {
   try {
     const sessionId = route.query.session_id;
     if (!sessionId) {
-      router.push('/pricing');
+      errorMessage.value = "Missing Stripe session id in URL.";
       return;
     }
 
     const token = localStorage.getItem('token');
     if (!token) {
-      router.push('/login?redirect=pricing');
+      const redirectPath = encodeURIComponent(`/payment-success?session_id=${sessionId}`);
+      router.push(`/login?redirect=${redirectPath}`);
       return;
     }
 
@@ -109,10 +115,14 @@ onMounted(async () => {
       if (authStore.user) {
         authStore.user.plan = data.plan;
         authStore.user.expiresAt = data.expiresAt;
+        localStorage.setItem("user", JSON.stringify(authStore.user));
       }
+    } else {
+      errorMessage.value = data.message || "Failed to confirm payment.";
     }
   } catch (error) {
     console.error('Payment confirmation error:', error);
+    errorMessage.value = "Could not verify payment status. Please check Transactions in Account.";
   } finally {
     loading.value = false;
   }

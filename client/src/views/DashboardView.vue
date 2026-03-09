@@ -143,20 +143,21 @@
           <div class="flex gap-3 items-end">
             <textarea
               v-model="promptText"
-              @keydown.enter.ctrl="handleSubmit"
-              @keydown.enter.meta="handleSubmit"
-              placeholder="Ask me to generate code, write tests, or document your code... (Ctrl+Enter to send)"
+              @keydown="handlePromptKeydown"
+              placeholder="Ask me to generate code, write tests, or document your code... (Enter to send, Shift+Enter for new line)"
               class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 resize-none focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
               rows="3"
               :disabled="isLoading || (isGuest && guestPromptsUsed >= 5)"
             />
             <button
-              type="submit"
-              :disabled="isLoading || !promptText.trim() || (isGuest && guestPromptsUsed >= 5)"
-              class="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-semibold flex items-center justify-center gap-2 whitespace-nowrap"
+              type="button"
+              @click="toggleVoiceInput"
+              :disabled="!voiceSupported || isLoading || (isGuest && guestPromptsUsed >= 5)"
+              class="px-4 py-3 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-semibold"
+              :class="{ 'border-red-500 text-red-300': isListening }"
+              :title="voiceSupported ? (isListening ? 'Stop voice input' : 'Start voice input') : 'Voice input not supported in this browser'"
             >
-              <span>Send</span>
-              <span>➤</span>
+              {{ isListening ? "Stop Mic" : "Mic" }}
             </button>
           </div>
           <div class="flex justify-between items-center text-sm text-gray-400">
@@ -178,7 +179,7 @@
   </div>
 </template>
 <script setup>
-import { ref, computed, onMounted, nextTick } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import { usePromptStore } from "../store/prompts";
 import { useAuthStore } from "../store/auth";
@@ -196,6 +197,9 @@ const messagesContainer = ref(null);
 const selectedModel = ref(promptStore.selectedModel);
 const isGuest = ref(localStorage.getItem("isGuest") === "true");
 const guestPromptsUsed = ref(parseInt(localStorage.getItem("guestPromptsUsed") || "0"));
+const voiceSupported = ref(false);
+const isListening = ref(false);
+let recognition = null;
 
 const chatHistory = computed(() => promptStore.chatHistory);
 const conversations = computed(() => promptStore.conversations);
@@ -214,6 +218,28 @@ const updateModel = () => {
   promptStore.setSelectedModel(selectedModel.value);
 };
 
+const handlePromptKeydown = (event) => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    handleSubmit();
+  }
+};
+
+const stopVoiceInput = () => {
+  if (recognition && isListening.value) {
+    recognition.stop();
+  }
+};
+
+const toggleVoiceInput = () => {
+  if (!voiceSupported.value || !recognition) return;
+  if (isListening.value) {
+    stopVoiceInput();
+  } else {
+    recognition.start();
+  }
+};
+
 const handleSubmit = async () => {
   if (!promptText.value.trim() || isLoading.value) return;
 
@@ -223,6 +249,7 @@ const handleSubmit = async () => {
   }
 
   isLoading.value = true;
+  stopVoiceInput();
   try {
     await promptStore.submitPrompt(promptText.value);
     selectedConversationId.value = promptStore.currentConversationId;
@@ -284,6 +311,41 @@ const openSettings = () => {
 };
 
 onMounted(async () => {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  voiceSupported.value = Boolean(SpeechRecognition);
+
+  if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.continuous = true;
+
+    recognition.onstart = () => {
+      isListening.value = true;
+    };
+
+    recognition.onend = () => {
+      isListening.value = false;
+    };
+
+    recognition.onerror = () => {
+      isListening.value = false;
+    };
+
+    recognition.onresult = (event) => {
+      let transcript = "";
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        transcript += event.results[i][0].transcript;
+      }
+
+      if (!transcript.trim()) return;
+
+      promptText.value = promptText.value.trim()
+        ? `${promptText.value} ${transcript.trim()}`
+        : transcript.trim();
+    };
+  }
+
   await promptStore.fetchConversations();
 
   if (promptStore.currentConversationId) {
@@ -298,6 +360,11 @@ onMounted(async () => {
   }
 
   scrollToBottom();
+});
+
+onUnmounted(() => {
+  stopVoiceInput();
+  recognition = null;
 });
 </script>
 

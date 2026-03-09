@@ -612,7 +612,7 @@ export default async (req, res) => {
           await Transaction.create({
             userId: user._id,
             plan,
-            amount: PRICING[plan],
+            amount: PRICING[plan] / 100,
             currency: "usd",
             status: "pending",
             sessionId: session.id,
@@ -663,7 +663,12 @@ export default async (req, res) => {
             expiresAt,
           });
 
-          return res.status(200).json({ message: "Payment confirmed" });
+          return res.status(200).json({
+            message: "Payment confirmed",
+            plan: transaction.plan,
+            expiresAt,
+            transaction,
+          });
         }
 
         // GET /api/payment/transactions

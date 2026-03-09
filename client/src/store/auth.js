@@ -1,10 +1,30 @@
 import { defineStore } from "pinia";
 import api from "../services/api";
 
+const readSafeJson = (key, fallback = null) => {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw || raw === "undefined" || raw === "null") return fallback;
+    return JSON.parse(raw);
+  } catch (error) {
+    localStorage.removeItem(key);
+    return fallback;
+  }
+};
+
+const readSafeToken = () => {
+  const token = localStorage.getItem("token");
+  if (!token || token === "undefined" || token === "null") {
+    localStorage.removeItem("token");
+    return "";
+  }
+  return token;
+};
+
 export const useAuthStore = defineStore("auth", {
   state: () => ({
-    user: JSON.parse(localStorage.getItem("user") || "null"),
-    token: localStorage.getItem("token") || "",
+    user: readSafeJson("user", null),
+    token: readSafeToken(),
     loading: false,
   }),
   getters: {
