@@ -454,18 +454,24 @@ export default async (req, res) => {
 
           // Update transaction
           const transaction = await Transaction.findOne({ sessionId });
-          if (transaction) {
-            transaction.status = "completed";
-            transaction.stripeId = session.payment_intent;
-            await transaction.save();
+          if (!transaction) {
+            // This is an inconsistent state. Stripe says the payment is complete,
+            // but we don't have a pending transaction record for this session.
+            // We should not proceed with the upgrade automatically.
+            console.error(`CRITICAL: Payment success for session ${sessionId} but no matching transaction found.`);
+            return res.status(404).json({ message: "Transaction record not found. Please contact support." });
           }
+
+          transaction.status = "completed";
+          transaction.stripeId = session.payment_intent;
+          await transaction.save();
 
           // Update user plan
           const expiresAt = new Date();
           expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
           await User.findByIdAndUpdate(user._id, {
-            plan: transaction?.plan || "super",
+            plan: transaction.plan,
             expiresAt,
           });
 
@@ -557,4 +563,3 @@ export default async (req, res) => {
     });
   }
 };
-
