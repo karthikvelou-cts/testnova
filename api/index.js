@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import axios from "axios";
+import stripe from "stripe";
 
 dotenv.config();
 
@@ -12,6 +13,8 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true, minlength: 6 },
+    plan: { type: String, default: "free", enum: ["free", "super", "premium"] },
+    expiresAt: { type: Date, default: null },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );
@@ -37,8 +40,38 @@ const promptSchema = new mongoose.Schema(
   { timestamps: { createdAt: true, updatedAt: false } }
 );
 
+const transactionSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    plan: { type: String, required: true },
+    amount: { type: Number, required: true },
+    currency: { type: String, default: "usd" },
+    status: { type: String, default: "pending", enum: ["pending", "completed", "failed", "refunded"] },
+    stripeId: String,
+    sessionId: String,
+    paymentMethod: String,
+    subscriptionDuration: { type: String, default: "yearly" },
+  },
+  { timestamps: { createdAt: true, updatedAt: false } }
+);
+
 const User = mongoose.model("User", userSchema);
 const Prompt = mongoose.model("Prompt", promptSchema);
+const Transaction = mongoose.model("Transaction", transactionSchema);
+
+// Stripe client
+const stripeClient = new stripe(process.env.STRIPE_SECRET_KEY);
+
+// Pricing
+const PRICING = {
+  super: 500,
+  premium: 1000,
+};
 
 // DB Connection
 let dbConnection = null;
@@ -194,6 +227,8 @@ export default async (req, res) => {
           _id: user._id,
           name: user.name,
           email: user.email,
+          plan: user.plan,
+          expiresAt: user.expiresAt,
           createdAt: user.createdAt,
         },
         token: generateToken(user._id),
@@ -275,6 +310,198 @@ export default async (req, res) => {
           return res.status(authError.status).json({ message: authError.message });
         }
         throw authError;
+      }
+    }
+
+    // Auth endpoints - profile and delete account
+    if (pathname.startsWith("/api/auth")) {
+      try {
+        const user = await authMiddleware(req);
+
+        // GET /api/auth/profile - get current user profile
+        if (pathname === "/api/auth/profile" && req.method === "GET") {
+          return res.status(200).json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            plan: user.plan,
+            expiresAt: user.expiresAt,
+            createdAt: user.createdAt,
+          });
+        }
+
+        // DELETE /api/auth/delete-account - delete user account
+        if (pathname === "/api/auth/delete-account" && req.method === "DELETE") {
+          // Delete all user's prompts
+          await Prompt.deleteMany({ userId: user._id });
+          // Delete all user's transactions
+          await Transaction.deleteMany({ userId: user._id });
+          // Delete user
+          await User.findByIdAndDelete(user._id);
+
+          return res.status(200).json({ message: "Account deleted successfully" });
+        }
+      } catch (authError) {
+        if (authError.status) {
+          return res.status(authError.status).json({ message: authError.message });
+        }
+        throw authError;
+      }
+    }
+
+    // Payment endpoints
+    if (pathname.startsWith("/api/payment")) {
+      try {
+        const user = await authMiddleware(req);
+
+        // POST /api/payment/create-checkout-session
+        if (pathname === "/api/payment/create-checkout-session" && req.method === "POST") {
+          const { plan, duration } = req.body || {};
+
+          if (!plan || !duration) {
+            return res.status(400).json({ message: "Plan and duration required" });
+          }
+
+          if (!PRICING[plan]) {
+            return res.status(400).json({ message: "Invalid plan" });
+          }
+
+          // Create Stripe session
+          const session = await stripeClient.checkout.sessions.create({
+            payment_method_types: ["card"],
+            mode: "payment",
+            customer_email: user.email,
+            client_reference_id: user._id.toString(),
+            line_items: [
+              {
+                price_data: {
+                  currency: "usd",
+                  product_data: {
+                    name: `TestNova ${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan (${duration})`,
+                    description: `Annual subscription to TestNova ${plan} plan`,
+                  },
+                  unit_amount: PRICING[plan],
+                },
+                quantity: 1,
+              },
+            ],
+            success_url: `${process.env.CLIENT_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.CLIENT_URL}/upgrade`,
+          });
+
+          // Create pending transaction
+          await Transaction.create({
+            userId: user._id,
+            plan,
+            amount: PRICING[plan],
+            currency: "usd",
+            status: "pending",
+            sessionId: session.id,
+            subscriptionDuration: duration,
+          });
+
+          return res.status(200).json({ sessionId: session.id });
+        }
+
+        // POST /api/payment/success
+        if (pathname === "/api/payment/success" && req.method === "POST") {
+          const { sessionId } = req.body || {};
+
+          if (!sessionId) {
+            return res.status(400).json({ message: "Session ID required" });
+          }
+
+          // Get session from Stripe
+          const session = await stripeClient.checkout.sessions.retrieve(sessionId);
+
+          if (session.payment_status !== "paid") {
+            return res.status(400).json({ message: "Payment not completed" });
+          }
+
+          // Update transaction
+          const transaction = await Transaction.findOne({ sessionId });
+          if (transaction) {
+            transaction.status = "completed";
+            transaction.stripeId = session.payment_intent;
+            await transaction.save();
+          }
+
+          // Update user plan
+          const expiresAt = new Date();
+          expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+
+          await User.findByIdAndUpdate(user._id, {
+            plan: transaction?.plan || "super",
+            expiresAt,
+          });
+
+          return res.status(200).json({ message: "Payment confirmed" });
+        }
+
+        // GET /api/payment/transactions
+        if (pathname === "/api/payment/transactions" && req.method === "GET") {
+          const transactions = await Transaction.find({ userId: user._id }).sort({ createdAt: -1 });
+          return res.status(200).json(transactions);
+        }
+      } catch (authError) {
+        if (authError.status) {
+          return res.status(authError.status).json({ message: authError.message });
+        }
+        throw authError;
+      }
+    }
+
+    // Webhook for Stripe (no auth needed)
+    if (pathname === "/api/payment/webhook" && req.method === "POST") {
+      const signature = req.headers["stripe-signature"];
+      const rawBody = req.rawBody || JSON.stringify(req.body);
+
+      try {
+        const event = stripeClient.webhooks.constructEvent(
+          rawBody,
+          signature,
+          process.env.STRIPE_WEBHOOK_SECRET
+        );
+
+        // Handle checkout.session.completed
+        if (event.type === "checkout.session.completed") {
+          const session = event.data.object;
+          const transaction = await Transaction.findOne({ sessionId: session.id });
+
+          if (transaction) {
+            transaction.status = "completed";
+            transaction.stripeId = session.payment_intent;
+            await transaction.save();
+
+            // Update user
+            const expiresAt = new Date();
+            expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+
+            await User.findByIdAndUpdate(
+              new mongoose.Types.ObjectId(session.client_reference_id),
+              {
+                plan: transaction.plan,
+                expiresAt,
+              }
+            );
+          }
+        }
+
+        // Handle charge.refunded
+        if (event.type === "charge.refunded") {
+          const charge = event.data.object;
+          const transaction = await Transaction.findOne({ stripeId: charge.payment_intent });
+
+          if (transaction) {
+            transaction.status = "refunded";
+            await transaction.save();
+          }
+        }
+
+        return res.status(200).json({ received: true });
+      } catch (error) {
+        console.error("Webhook error:", error.message);
+        return res.status(400).json({ error: "Webhook signature verification failed" });
       }
     }
 

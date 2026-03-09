@@ -93,7 +93,7 @@ onMounted(async () => {
     }
 
     // Call backend to confirm payment
-    const response = await fetch('/api/payments/success', {
+    const response = await fetch('/api/payment/success', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -4,6 +4,8 @@
     <nav class="flex flex-col gap-2">
       <RouterLink to="/" class="rounded-lg px-3 py-2 hover:bg-slate-700" active-class="bg-slate-700">Dashboard</RouterLink>
       <RouterLink to="/history" class="rounded-lg px-3 py-2 hover:bg-slate-700" active-class="bg-slate-700">Prompt History</RouterLink>
+      <RouterLink to="/account" class="rounded-lg px-3 py-2 hover:bg-slate-700" active-class="bg-slate-700">Account</RouterLink>
+      <RouterLink to="/upgrade" class="rounded-lg px-3 py-2 hover:bg-slate-700 text-cyan-300" active-class="bg-slate-700">Upgrade</RouterLink>
     </nav>
     <button
       class="mt-auto rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold hover:bg-rose-500"
