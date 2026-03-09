@@ -3,7 +3,7 @@
     <!-- Navigation -->
     <nav class="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-slate-800">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-        <img :src="logoUrl" alt="TestNova" class="h-10 w-auto object-contain" />
+        <img src="/testnova-logo.png" alt="TestNova" class="h-10 w-auto object-contain" />
         <div class="flex gap-4">
           <router-link to="/login" class="px-6 py-2 rounded-lg hover:bg-slate-800 transition">
             Login
@@ -362,7 +362,6 @@
 <script setup>
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../store/auth';
-import logoUrl from '../assets/testnova-logo.png';
 
 const router = useRouter();
 const authStore = useAuthStore();

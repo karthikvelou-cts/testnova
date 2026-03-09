@@ -4,7 +4,7 @@
     <div class="w-64 bg-slate-900/50 border-r border-slate-800 flex flex-col">
       <!-- Logo -->
       <div class="p-6 border-b border-slate-800 flex items-center justify-center">
-        <img :src="logoUrl" alt="TestNova" class="h-12 w-auto object-contain" />
+        <img src="/testnova-logo.png" alt="TestNova" class="h-12 w-auto object-contain" />
       </div>
 
       <!-- New Chat Button -->
@@ -184,7 +184,6 @@ import { usePromptStore } from "../store/prompts";
 import { useAuthStore } from "../store/auth";
 import RichTextRenderer from "../components/RichTextRenderer.vue";
 import LoaderSpinner from "../components/LoaderSpinner.vue";
-import logoUrl from "../assets/testnova-logo.png";
 
 const router = useRouter();
 const promptStore = usePromptStore();
