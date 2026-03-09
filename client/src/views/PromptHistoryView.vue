@@ -1,48 +1,51 @@
 <template>
-  <div class="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-4 p-4 md:flex-row">
-    <SidebarNav />
-    <main class="flex-1 rounded-2xl bg-white p-6 shadow-lg">
-      <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-2xl font-bold">Prompt History</h2>
-        <LoaderSpinner v-if="promptStore.loading" />
-      </div>
+  <div class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
+    <div class="mx-auto flex max-w-7xl flex-col gap-6 p-6 md:flex-row">
+      <SidebarNav />
+      <main class="flex-1 rounded-2xl bg-slate-800/50 border border-slate-700 p-8">
+        <div class="mb-6 flex items-center justify-between">
+          <h2 class="text-3xl font-bold">Prompt History</h2>
+          <LoaderSpinner v-if="promptStore.loading" />
+        </div>
 
-      <div v-if="!promptStore.prompts.length" class="rounded-lg bg-slate-100 p-4 text-sm text-slate-700">
-        No prompts found yet.
-      </div>
+        <div v-if="!promptStore.prompts.length" class="rounded-lg bg-slate-700/30 border border-slate-700 p-6 text-center text-gray-400">
+          <p class="text-lg">No prompts found yet.</p>
+          <p class="text-sm mt-2">Your chat history will appear here</p>
+        </div>
 
-      <ul v-else class="space-y-3">
-        <li v-for="item in promptStore.prompts" :key="item._id" class="rounded-lg border p-4">
-          <div class="mb-2 flex items-center justify-between gap-4">
-            <RouterLink :to="`/history/${item._id}`" class="font-semibold text-blue-700 hover:underline">
-              {{ item.prompt.slice(0, 80) }}{{ item.prompt.length > 80 ? "..." : "" }}
-            </RouterLink>
-            <button class="rounded bg-rose-600 px-2 py-1 text-xs font-semibold text-white" @click="removePrompt(item._id)">Delete</button>
-          </div>
-          <p class="text-xs text-slate-500">{{ formatDate(item.createdAt) }}</p>
-        </li>
-      </ul>
+        <ul v-else class="space-y-4">
+          <li v-for="item in promptStore.prompts" :key="item._id" class="rounded-lg bg-slate-700/30 border border-slate-700 p-5 hover:bg-slate-700/50 transition">
+            <div class="mb-3 flex items-center justify-between gap-4">
+              <RouterLink :to="`/history/${item._id}`" class="font-semibold text-blue-400 hover:text-blue-300 transition flex-1">
+                {{ item.prompt.slice(0, 100) }}{{ item.prompt.length > 100 ? "..." : "" }}
+              </RouterLink>
+              <button class="rounded bg-rose-600 hover:bg-rose-700 px-3 py-1 text-xs font-semibold text-white transition" @click="removePrompt(item._id)">Delete</button>
+            </div>
+            <p class="text-xs text-gray-400">{{ formatDate(item.createdAt) }}</p>
+          </li>
+        </ul>
 
-      <div class="mt-6 flex items-center justify-between">
-        <button
-          class="rounded border px-3 py-1 text-sm disabled:opacity-40"
-          :disabled="promptStore.pagination.page <= 1"
-          @click="loadPage(promptStore.pagination.page - 1)"
-        >
-          Previous
-        </button>
-        <p class="text-sm text-slate-600">
-          Page {{ promptStore.pagination.page }} of {{ promptStore.pagination.totalPages }}
-        </p>
-        <button
-          class="rounded border px-3 py-1 text-sm disabled:opacity-40"
-          :disabled="promptStore.pagination.page >= promptStore.pagination.totalPages"
-          @click="loadPage(promptStore.pagination.page + 1)"
-        >
-          Next
-        </button>
-      </div>
-    </main>
+        <div class="mt-8 flex items-center justify-between">
+          <button
+            class="rounded px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600 text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"
+            :disabled="promptStore.pagination.page <= 1"
+            @click="loadPage(promptStore.pagination.page - 1)"
+          >
+            ← Previous
+          </button>
+          <p class="text-sm text-gray-400">
+            Page <span class="font-semibold text-white">{{ promptStore.pagination.page }}</span> of <span class="font-semibold text-white">{{ promptStore.pagination.totalPages }}</span>
+          </p>
+          <button
+            class="rounded px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600 text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"
+            :disabled="promptStore.pagination.page >= promptStore.pagination.totalPages"
+            @click="loadPage(promptStore.pagination.page + 1)"
+          >
+            Next →
+          </button>
+        </div>
+      </main>
+    </div>
   </div>
 </template>
 

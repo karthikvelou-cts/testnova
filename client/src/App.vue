@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-100 text-slate-900">
+  <div class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
     <ToastList />
     <router-view />
   </div>
