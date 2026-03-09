@@ -155,25 +155,18 @@ export default async (req, res) => {
   }
 
   try {
-    // Parse request body
+    // Parse request body - handle Vercel's default body parsing
     let body = {};
-    if (req.body) {
-      body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-    } else if (req.method !== "GET" && req.method !== "DELETE") {
-      // For Vercel, manually parse the body
-      body = await new Promise((resolve, reject) => {
-        let data = "";
-        req.on("data", chunk => { data += chunk; });
-        req.on("end", () => {
-          try {
-            resolve(data ? JSON.parse(data) : {});
-          } catch (e) {
-            console.error("JSON parse error:", e.message, "data:", data);
-            resolve({});
-          }
-        });
-        req.on("error", reject);
-      });
+    
+    // In Vercel Node.js runtime, body is already parsed if content-type is application/json
+    if (typeof req.body === "object") {
+      body = req.body || {};
+    } else if (typeof req.body === "string") {
+      try {
+        body = JSON.parse(req.body);
+      } catch (e) {
+        body = {};
+      }
     }
 
     // Log for debugging
