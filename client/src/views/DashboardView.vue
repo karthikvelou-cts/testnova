@@ -3,10 +3,8 @@
     <!-- Sidebar -->
     <div class="w-64 bg-slate-900/50 border-r border-slate-800 flex flex-col">
       <!-- Logo -->
-      <div class="p-6 border-b border-slate-800">
-        <div class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-          TestNova
-        </div>
+      <div class="p-6 border-b border-slate-800 flex items-center justify-center">
+        <img src="@/assets/testnova-logo.png" alt="TestNova" class="h-12 w-auto object-contain" />
       </div>
 
       <!-- New Chat Button -->
@@ -61,13 +59,13 @@
       <div class="border-t border-slate-800 p-4 space-y-2">
         <router-link
           to="/history"
-          class="w-full px-4 py-2 bg-slate-800/50 hover:bg-slate-800 rounded-lg text-sm text-center transition"
+          class="w-full flex items-center justify-center px-4 py-2 bg-slate-800/50 hover:bg-slate-700 rounded-lg text-sm transition font-medium text-white"
         >
           View History
         </router-link>
         <button
           @click="handleLogout"
-          class="w-full px-4 py-2 bg-slate-800/50 hover:bg-slate-800 rounded-lg text-sm transition"
+          class="w-full flex items-center justify-center px-4 py-2 bg-slate-800/50 hover:bg-slate-700 rounded-lg text-sm transition font-medium text-white"
         >
           Logout
         </button>
@@ -142,7 +140,7 @@
       <!-- Input Area -->
       <div class="border-t border-slate-800 bg-slate-900/50 backdrop-blur-sm p-6">
         <form @submit.prevent="handleSubmit" class="space-y-4">
-          <div class="flex gap-4">
+          <div class="flex gap-3 items-end">
             <textarea
               v-model="promptText"
               @keydown.enter.ctrl="handleSubmit"
@@ -155,7 +153,7 @@
             <button
               type="submit"
               :disabled="isLoading || !promptText.trim() || (isGuest && guestPromptsUsed >= 5)"
-              class="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-semibold flex items-center gap-2 h-fit"
+              class="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-semibold flex items-center justify-center gap-2 whitespace-nowrap"
             >
               <span>Send</span>
               <span>➤</span>

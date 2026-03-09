@@ -1,47 +1,47 @@
 <template>
-  <div class="prose prose-sm max-w-none space-y-4">
+  <div class="prose prose-sm max-w-none space-y-3">
     <div v-for="(block, idx) in parseContent(content)" :key="idx">
       <!-- Code blocks -->
-      <pre v-if="block.type === 'code'" class="overflow-x-auto rounded-lg bg-slate-900 p-4 text-sm">
-        <code class="text-slate-100">{{ block.value }}</code>
+      <pre v-if="block.type === 'code'" class="overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm border border-slate-700">
+        <code class="text-emerald-400 font-mono">{{ block.value }}</code>
       </pre>
 
       <!-- Headings -->
-      <h1 v-else-if="block.type === 'h1'" class="mt-6 text-3xl font-bold text-slate-900">
+      <h1 v-else-if="block.type === 'h1'" class="mt-6 text-3xl font-bold text-cyan-300">
         {{ block.value }}
       </h1>
-      <h2 v-else-if="block.type === 'h2'" class="mt-5 text-2xl font-bold text-slate-800">
+      <h2 v-else-if="block.type === 'h2'" class="mt-5 text-2xl font-bold text-blue-300">
         {{ block.value }}
       </h2>
-      <h3 v-else-if="block.type === 'h3'" class="mt-4 text-xl font-semibold text-slate-800">
+      <h3 v-else-if="block.type === 'h3'" class="mt-4 text-xl font-semibold text-blue-200">
         {{ block.value }}
       </h3>
 
       <!-- Lists -->
-      <ul v-else-if="block.type === 'ul'" class="list-inside list-disc space-y-2 text-slate-700">
+      <ul v-else-if="block.type === 'ul'" class="list-inside list-disc space-y-2 text-gray-300">
         <li v-for="(item, i) in block.value" :key="i" class="ml-2">{{ item }}</li>
       </ul>
-      <ol v-else-if="block.type === 'ol'" class="list-inside list-decimal space-y-2 text-slate-700">
+      <ol v-else-if="block.type === 'ol'" class="list-inside list-decimal space-y-2 text-gray-300">
         <li v-for="(item, i) in block.value" :key="i" class="ml-2">{{ item }}</li>
       </ol>
 
       <!-- Blockquotes -->
-      <blockquote v-else-if="block.type === 'blockquote'" class="border-l-4 border-slate-300 bg-slate-50 px-4 py-2 italic text-slate-700">
+      <blockquote v-else-if="block.type === 'blockquote'" class="border-l-4 border-cyan-500 bg-slate-800/50 px-4 py-2 italic text-gray-300">
         {{ block.value }}
       </blockquote>
 
       <!-- Inline code -->
-      <p v-else-if="block.type === 'text'" class="whitespace-pre-wrap text-slate-700 leading-relaxed">
+      <p v-else-if="block.type === 'text'" class="whitespace-pre-wrap text-gray-300 leading-relaxed">
         <span v-for="(segment, i) in block.value" :key="i">
-          <code v-if="segment.type === 'inline-code'" class="rounded bg-slate-200 px-2 py-0.5 font-mono text-sm text-slate-900">{{ segment.text }}</code>
-          <strong v-else-if="segment.type === 'bold'" class="font-semibold text-slate-900">{{ segment.text }}</strong>
-          <em v-else-if="segment.type === 'italic'" class="italic text-slate-800">{{ segment.text }}</em>
+          <code v-if="segment.type === 'inline-code'" class="rounded bg-slate-900 px-2 py-1 font-mono text-sm text-emerald-400 border border-slate-700">{{ segment.text }}</code>
+          <strong v-else-if="segment.type === 'bold'" class="font-semibold text-white">{{ segment.text }}</strong>
+          <em v-else-if="segment.type === 'italic'" class="italic text-gray-200">{{ segment.text }}</em>
           <span v-else>{{ segment.text }}</span>
         </span>
       </p>
 
       <!-- Plain paragraphs -->
-      <p v-else class="text-slate-700 leading-relaxed">{{ block.value }}</p>
+      <p v-else class="text-gray-300 leading-relaxed">{{ block.value }}</p>
     </div>
   </div>
 </template>
@@ -182,6 +182,6 @@ const parseInlineFormatting = (text) => {
 
 <style scoped>
 .prose {
-  color: #1f2937;
+  color: #d1d5db;
 }
 </style>

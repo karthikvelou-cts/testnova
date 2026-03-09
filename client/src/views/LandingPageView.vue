@@ -3,9 +3,7 @@
     <!-- Navigation -->
     <nav class="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-slate-800">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-        <div class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-          TestNova
-        </div>
+        <img src="@/assets/testnova-logo.png" alt="TestNova" class="h-10 w-auto object-contain" />
         <div class="flex gap-4">
           <router-link to="/login" class="px-6 py-2 rounded-lg hover:bg-slate-800 transition">
             Login
