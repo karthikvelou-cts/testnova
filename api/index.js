@@ -64,9 +64,6 @@ const User = mongoose.model("User", userSchema);
 const Prompt = mongoose.model("Prompt", promptSchema);
 const Transaction = mongoose.model("Transaction", transactionSchema);
 
-// Stripe client
-const stripeClient = new stripe(process.env.STRIPE_SECRET_KEY);
-
 // Pricing
 const PRICING = {
   super: 500,
@@ -158,6 +155,26 @@ export default async (req, res) => {
   }
 
   try {
+    // Parse request body
+    let body = {};
+    if (req.body) {
+      body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    } else if (req.method !== "GET" && req.method !== "DELETE") {
+      // For Vercel, manually parse the body
+      body = await new Promise((resolve, reject) => {
+        let data = "";
+        req.on("data", chunk => { data += chunk; });
+        req.on("end", () => {
+          try {
+            resolve(data ? JSON.parse(data) : {});
+          } catch (e) {
+            resolve({});
+          }
+        });
+        req.on("error", reject);
+      });
+    }
+
     // Parse URL and query parameters
     const url = new URL(req.url || "/", "http://localhost");
     const pathname = url.pathname;
@@ -173,7 +190,7 @@ export default async (req, res) => {
 
     // Register endpoint
     if (pathname === "/api/auth/register" && req.method === "POST") {
-      const { name, email, password } = req.body || {};
+      const { name, email, password } = body;
 
       if (!name || !email || !password) {
         return res.status(400).json({ message: "Name, email and password are required" });
@@ -206,7 +223,7 @@ export default async (req, res) => {
 
     // Login endpoint
     if (pathname === "/api/auth/login" && req.method === "POST") {
-      const { email, password } = req.body || {};
+      const { email, password } = body;
 
       if (!email || !password) {
         return res.status(400).json({ message: "Email and password are required" });
@@ -264,7 +281,7 @@ export default async (req, res) => {
 
         // POST /api/prompts - create prompt
         if (pathname === "/api/prompts" && req.method === "POST") {
-          const { prompt } = req.body || {};
+          const { prompt } = body;
 
           if (!prompt || !prompt.trim?.()) {
             return res.status(400).json({ message: "Prompt is required" });
@@ -353,10 +370,11 @@ export default async (req, res) => {
     if (pathname.startsWith("/api/payment")) {
       try {
         const user = await authMiddleware(req);
+        const stripeClient = new stripe(process.env.STRIPE_SECRET_KEY);
 
         // POST /api/payment/create-checkout-session
         if (pathname === "/api/payment/create-checkout-session" && req.method === "POST") {
-          const { plan, duration } = req.body || {};
+          const { plan, duration } = body;
 
           if (!plan || !duration) {
             return res.status(400).json({ message: "Plan and duration required" });
@@ -405,7 +423,7 @@ export default async (req, res) => {
 
         // POST /api/payment/success
         if (pathname === "/api/payment/success" && req.method === "POST") {
-          const { sessionId } = req.body || {};
+          const { sessionId } = body;
 
           if (!sessionId) {
             return res.status(400).json({ message: "Session ID required" });
