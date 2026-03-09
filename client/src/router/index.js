@@ -7,10 +7,14 @@ import RegisterView from "../views/RegisterView.vue";
 import LandingPageView from "../views/LandingPageView.vue";
 import PricingView from "../views/PricingView.vue";
 import PaymentSuccessView from "../views/PaymentSuccessView.vue";
+import AccountView from "../views/AccountView.vue";
+import UpgradeView from "../views/UpgradeView.vue";
 
 const routes = [
   { path: "/", name: "landing", component: LandingPageView, meta: { guestOnly: false } },
   { path: "/pricing", name: "pricing", component: PricingView },
+  { path: "/upgrade", name: "upgrade", component: UpgradeView, meta: { requiresAuth: true } },
+  { path: "/account", name: "account", component: AccountView, meta: { requiresAuth: true } },
   { path: "/payment-success", name: "payment-success", component: PaymentSuccessView, meta: { requiresAuth: true } },
   { path: "/login", name: "login", component: LoginView, meta: { guestOnly: true } },
   { path: "/register", name: "register", component: RegisterView, meta: { guestOnly: true } },

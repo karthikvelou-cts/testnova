@@ -5,12 +5,25 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
         <img src="/testnova-logo.png" alt="TestNova" class="h-10 w-auto object-contain" />
         <div class="flex gap-4">
-          <router-link to="/login" class="px-6 py-2 rounded-lg hover:bg-slate-800 transition">
-            Login
-          </router-link>
-          <router-link to="/register" class="px-6 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition">
-            Sign Up
-          </router-link>
+          <template v-if="isLoggedIn">
+            <router-link to="/dashboard" class="px-6 py-2 rounded-lg hover:bg-slate-800 transition">
+              Dashboard
+            </router-link>
+            <router-link to="/account" class="px-6 py-2 rounded-lg hover:bg-slate-800 transition">
+              Account
+            </router-link>
+            <button @click="logout" class="px-6 py-2 bg-red-600 rounded-lg hover:bg-red-700 transition">
+              Logout
+            </button>
+          </template>
+          <template v-else>
+            <router-link to="/login" class="px-6 py-2 rounded-lg hover:bg-slate-800 transition">
+              Login
+            </router-link>
+            <router-link to="/register" class="px-6 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition">
+              Sign Up
+            </router-link>
+          </template>
         </div>
       </div>
     </nav>
@@ -360,11 +373,16 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../store/auth';
 
 const router = useRouter();
 const authStore = useAuthStore();
+
+const isLoggedIn = computed(() => {
+  return !!localStorage.getItem('token');
+});
 
 const handleGuestLogin = async () => {
   try {
@@ -377,6 +395,14 @@ const handleGuestLogin = async () => {
   } catch (error) {
     console.error('Guest login error:', error);
   }
+};
+
+const logout = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('isGuest');
+  localStorage.removeItem('guestToken');
+  authStore.logout();
+  router.push('/');
 };
 </script>
 
