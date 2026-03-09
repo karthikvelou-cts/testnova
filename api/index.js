@@ -112,6 +112,10 @@ async function authMiddleware(req) {
     }
     return user;
   } catch (error) {
+    if (error.status) {
+      throw error;
+    }
+    console.error("Auth middleware error:", error.message);
     throw { status: 401, message: "Not authorized, token invalid" };
   }
 }
@@ -459,10 +463,13 @@ export default async (req, res) => {
           return res.status(200).json(transactions);
         }
       } catch (authError) {
+        console.error("Payment endpoint error:", authError);
         if (authError.status) {
           return res.status(authError.status).json({ message: authError.message });
         }
-        throw authError;
+        // If it's not a custom error with status, log it and return 500
+        console.error("Unexpected payment error:", authError.message, authError.stack);
+        return res.status(500).json({ message: "Internal server error", error: authError.message });
       }
     }
 
@@ -526,9 +533,12 @@ export default async (req, res) => {
     console.error("Handler error:", error);
     console.error("Error stack:", error.stack);
     console.error("Error message:", error.message);
+    console.error("Error details:", JSON.stringify(error, null, 2));
     return res.status(500).json({ 
       message: "Internal server error",
       error: process.env.NODE_ENV === "development" ? error.message : undefined,
+      path: req.url,
+      method: req.method,
     });
   }
 };
