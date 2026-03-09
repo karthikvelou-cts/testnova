@@ -19,6 +19,25 @@ const userSchema = new mongoose.Schema(
       required: true,
       minlength: 6,
     },
+    // Subscription fields
+    plan: {
+      type: String,
+      enum: ['free', 'super', 'premium'],
+      default: 'free',
+    },
+    subscriptionId: {
+      type: String,
+      default: null,
+    },
+    expiresAt: {
+      type: Date,
+      default: null,
+    },
+    // Ollama model preference
+    preferredModel: {
+      type: String,
+      default: 'mistral',
+    },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );
