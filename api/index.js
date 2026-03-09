@@ -77,6 +77,10 @@ async function connectDB() {
   if (dbConnection) return dbConnection;
   
   try {
+    if (!process.env.MONGO_URI) {
+      throw new Error("MONGO_URI environment variable is not set");
+    }
+    
     const conn = await mongoose.connect(process.env.MONGO_URI, {
       serverSelectionTimeoutMS: 10000,
       connectTimeoutMS: 10000,
@@ -85,6 +89,7 @@ async function connectDB() {
     return conn;
   } catch (error) {
     console.error("MongoDB connection error:", error.message);
+    console.error("MONGO_URI:", process.env.MONGO_URI ? "set" : "NOT SET");
     throw error;
   }
 }
@@ -183,7 +188,17 @@ export default async (req, res) => {
 
     // Health check - doesn't need DB
     if (pathname === "/api/health" && req.method === "GET") {
-      return res.status(200).json({ status: "ok" });
+      return res.status(200).json({ 
+        status: "ok",
+        env: {
+          hasMongoUri: !!process.env.MONGO_URI,
+          hasJwtSecret: !!process.env.JWT_SECRET,
+          hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
+          mongoUri: process.env.MONGO_URI ? "configured" : "MISSING",
+          jwtSecret: process.env.JWT_SECRET ? "configured" : "MISSING",
+          stripeKey: process.env.STRIPE_SECRET_KEY ? "configured" : "MISSING",
+        }
+      });
     }
 
     // Connect to DB for other endpoints
