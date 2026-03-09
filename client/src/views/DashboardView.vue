@@ -44,13 +44,13 @@
         <h3 class="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-4">History</h3>
         <div class="space-y-2">
           <button
-            v-for="(item, index) in chatHistory.slice().reverse()"
-            :key="item._id || index"
+            v-for="item in conversations"
+            :key="item.conversationId"
             @click="selectChat(item)"
             class="w-full text-left p-3 rounded-lg hover:bg-slate-800/50 transition text-sm text-gray-300 hover:text-white truncate"
-            :class="{ 'bg-slate-800/50': selectedChatId === item._id }"
+            :class="{ 'bg-slate-800/50': selectedConversationId === item.conversationId }"
           >
-            {{ item.prompt.substring(0, 40) }}...
+            {{ item.preview || "New conversation" }}
           </button>
         </div>
       </div>
@@ -191,13 +191,14 @@ const authStore = useAuthStore();
 
 const promptText = ref("");
 const isLoading = ref(false);
-const selectedChatId = ref(null);
+const selectedConversationId = ref(promptStore.currentConversationId || null);
 const messagesContainer = ref(null);
 const selectedModel = ref(promptStore.selectedModel);
 const isGuest = ref(localStorage.getItem("isGuest") === "true");
 const guestPromptsUsed = ref(parseInt(localStorage.getItem("guestPromptsUsed") || "0"));
 
 const chatHistory = computed(() => promptStore.chatHistory);
+const conversations = computed(() => promptStore.conversations);
 const currentModel = computed(() => 
   promptStore.availableModels.find(m => m.id === selectedModel.value)
 );
@@ -224,6 +225,7 @@ const handleSubmit = async () => {
   isLoading.value = true;
   try {
     await promptStore.submitPrompt(promptText.value);
+    selectedConversationId.value = promptStore.currentConversationId;
     
     if (isGuest.value) {
       guestPromptsUsed.value++;
@@ -250,19 +252,22 @@ const scrollToBottom = () => {
 };
 
 const newChat = () => {
-  promptStore.clearChatHistory();
-  selectedChatId.value = null;
+  const conversationId = promptStore.startNewConversation();
+  selectedConversationId.value = conversationId;
   promptText.value = "";
 };
 
-const selectChat = (chat) => {
-  selectedChatId.value = chat._id;
+const selectChat = async (chat) => {
+  selectedConversationId.value = chat.conversationId;
+  await promptStore.loadConversation(chat.conversationId);
+  await nextTick();
+  scrollToBottom();
 };
 
 const clearHistory = async () => {
   if (confirm("Are you sure you want to clear all chat history?")) {
-    promptStore.clearChatHistory();
-    selectedChatId.value = null;
+    const conversationId = promptStore.startNewConversation();
+    selectedConversationId.value = conversationId;
   }
 };
 
@@ -279,6 +284,19 @@ const openSettings = () => {
 };
 
 onMounted(async () => {
+  await promptStore.fetchConversations();
+
+  if (promptStore.currentConversationId) {
+    selectedConversationId.value = promptStore.currentConversationId;
+    await promptStore.loadConversation(promptStore.currentConversationId);
+  } else if (promptStore.conversations.length > 0) {
+    const latest = promptStore.conversations[0];
+    selectedConversationId.value = latest.conversationId;
+    await promptStore.loadConversation(latest.conversationId);
+  } else {
+    selectedConversationId.value = promptStore.startNewConversation();
+  }
+
   scrollToBottom();
 });
 </script>

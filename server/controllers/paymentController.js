@@ -13,7 +13,7 @@ const PRICING = {
 export const createCheckoutSession = async (req, res) => {
   try {
     const { plan, duration } = req.body;
-    const userId = req.userId;
+    const userId = req.user._id;
 
     if (!plan || !duration) {
       return res.status(400).json({ message: "Plan and duration required" });
@@ -71,6 +71,7 @@ export const createCheckoutSession = async (req, res) => {
 
     res.json({
       sessionId: session.id,
+      checkoutUrl: session.url,
       transactionId: transaction._id,
     });
   } catch (error) {
@@ -82,7 +83,7 @@ export const createCheckoutSession = async (req, res) => {
 export const handlePaymentSuccess = async (req, res) => {
   try {
     const { sessionId } = req.body;
-    const userId = req.userId;
+    const userId = req.user._id;
 
     // Get session from Stripe
     const session = await stripeClient.checkout.sessions.retrieve(sessionId);
@@ -134,7 +135,7 @@ export const handlePaymentSuccess = async (req, res) => {
 
 export const getTransactionHistory = async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = req.user._id;
 
     const transactions = await Transaction.find({ userId })
       .sort({ createdAt: -1 })

@@ -5,7 +5,7 @@ import {
   getTransactionHistory,
   handleWebhook,
 } from "../controllers/paymentController.js";
-import { authMiddleware } from "../middleware/authMiddleware.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -13,8 +13,8 @@ const router = express.Router();
 router.post("/webhook", handleWebhook);
 
 // Protected routes
-router.post("/create-checkout-session", authMiddleware, createCheckoutSession);
-router.post("/success", authMiddleware, handlePaymentSuccess);
-router.get("/transactions", authMiddleware, getTransactionHistory);
+router.post("/create-checkout-session", protect, createCheckoutSession);
+router.post("/success", protect, handlePaymentSuccess);
+router.get("/transactions", protect, getTransactionHistory);
 
 export default router;

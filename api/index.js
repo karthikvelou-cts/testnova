@@ -40,6 +40,46 @@ const promptSchema = new mongoose.Schema(
   { timestamps: { createdAt: true, updatedAt: false } }
 );
 
+const messageSchema = new mongoose.Schema(
+  {
+    role: {
+      type: String,
+      enum: ["system", "user", "assistant"],
+      required: true,
+    },
+    content: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+  },
+  { _id: false }
+);
+
+const conversationSchema = new mongoose.Schema(
+  {
+    conversationId: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    messages: {
+      type: [messageSchema],
+      default: [],
+    },
+  },
+  { timestamps: true }
+);
+
+conversationSchema.index({ userId: 1, conversationId: 1 }, { unique: true });
+conversationSchema.index({ userId: 1, updatedAt: -1 });
+
 const transactionSchema = new mongoose.Schema(
   {
     userId: {
@@ -62,6 +102,7 @@ const transactionSchema = new mongoose.Schema(
 
 const User = mongoose.model("User", userSchema);
 const Prompt = mongoose.model("Prompt", promptSchema);
+const Conversation = mongoose.model("Conversation", conversationSchema);
 const Transaction = mongoose.model("Transaction", transactionSchema);
 
 // Pricing
@@ -125,31 +166,63 @@ async function authMiddleware(req) {
   }
 }
 
-// Ollama Client
-async function sendPromptToOllama(prompt) {
-  const headers = { "Content-Type": "application/json" };
+const ollama = {
+  chat: async ({ model, messages }) => {
+    const headers = { "Content-Type": "application/json" };
 
-  if (process.env.OLLAMA_API_KEY) {
-    headers.Authorization = `Bearer ${process.env.OLLAMA_API_KEY}`;
-  }
+    const apiKey = process.env.LLM_API_KEY || process.env.OLLAMA_API_KEY;
+    const apiUrl = process.env.LLM_API_URL || process.env.OLLAMA_API_URL || "https://ollama.com/api/chat";
 
-  const payload = {
-    model: process.env.OLLAMA_MODEL || "devstral-small-2:24b",
-    messages: [{ role: "user", content: prompt }],
-    stream: false,
-    options: {
-      temperature: 0.2,
-      num_predict: 300
+    if (apiKey) {
+      headers.Authorization = `Bearer ${apiKey}`;
     }
-  };
 
-  const { data } = await axios.post(
-    process.env.OLLAMA_API_URL || "https://ollama.com/api/chat",
-    payload,
-    { headers, timeout: 120000 }
-  );
+    const isOllamaNative = apiUrl.includes("/api/chat") || apiUrl.includes("/api/generate");
+    const payload = {
+      model,
+      messages,
+      stream: false,
+    };
 
-  return data?.message?.content || data?.response || "No response from model.";
+    if (isOllamaNative) {
+      payload.options = {
+        temperature: 0.2,
+        num_predict: 4096,
+      };
+    } else {
+      payload.temperature = 0.2;
+      payload.max_tokens = 4096;
+    }
+
+    const { data } = await axios.post(apiUrl, payload, { headers, timeout: 120000 });
+    return data;
+  },
+};
+
+// Ollama Client
+async function sendPromptToOllama(promptOrMessages) {
+  const model = process.env.LLM_MODEL || process.env.OLLAMA_MODEL || "devstral-small-2:24b";
+  const messages = Array.isArray(promptOrMessages)
+    ? promptOrMessages
+    : [{ role: "user", content: promptOrMessages }];
+
+  try {
+    const data = await ollama.chat({
+      model,
+      messages,
+    });
+
+    return data?.choices?.[0]?.message?.content || 
+           data?.message?.content || 
+           data?.response || 
+           "No response from model.";
+  } catch (error) {
+    console.error("AI Client Error:", error.message);
+    if (error.response) {
+      console.error("Response data:", error.response.data);
+    }
+    throw error;
+  }
 }
 
 // Handler
@@ -268,6 +341,103 @@ export default async (req, res) => {
       });
     }
 
+    // Chat endpoints - require auth
+    if (pathname.startsWith("/api/chat")) {
+      try {
+        const user = await authMiddleware(req);
+
+        // POST /api/chat
+        if (pathname === "/api/chat" && req.method === "POST") {
+          const { conversationId, prompt } = body;
+
+          if (!conversationId || typeof conversationId !== "string" || !conversationId.trim()) {
+            return res.status(400).json({ message: "conversationId is required" });
+          }
+
+          if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
+            return res.status(400).json({ message: "Prompt is required" });
+          }
+
+          const normalizedConversationId = conversationId.trim();
+          const userMessage = { role: "user", content: prompt.trim() };
+
+          let conversation = await Conversation.findOne({
+            userId: user._id,
+            conversationId: normalizedConversationId,
+          });
+
+          if (!conversation) {
+            conversation = await Conversation.create({
+              userId: user._id,
+              conversationId: normalizedConversationId,
+              messages: [userMessage],
+            });
+          } else {
+            conversation.messages.push(userMessage);
+          }
+
+          const contextMessages = conversation.messages.slice(-10);
+          const assistantResponse = await sendPromptToOllama(contextMessages);
+          conversation.messages.push({ role: "assistant", content: assistantResponse });
+          await conversation.save();
+
+          return res.status(200).json({ response: assistantResponse });
+        }
+
+        // GET /api/chat/conversations
+        if (pathname === "/api/chat/conversations" && req.method === "GET") {
+          const conversations = await Conversation.find({ userId: user._id })
+            .sort({ updatedAt: -1 })
+            .select("conversationId messages createdAt updatedAt");
+
+          const items = conversations.map((conversation) => {
+            const firstUserMessage = conversation.messages.find((message) => message.role === "user");
+            const preview = firstUserMessage?.content || "New conversation";
+            return {
+              conversationId: conversation.conversationId,
+              createdAt: conversation.createdAt,
+              updatedAt: conversation.updatedAt,
+              preview: preview.length > 70 ? `${preview.slice(0, 70)}...` : preview,
+              messageCount: conversation.messages.length,
+            };
+          });
+
+          return res.status(200).json({ items });
+        }
+
+        // GET /api/chat/conversations/:conversationId
+        const conversationMatch = pathname.match(/^\/api\/chat\/conversations\/([^/]+)$/);
+        if (conversationMatch && req.method === "GET") {
+          const conversationId = decodeURIComponent(conversationMatch[1]).trim();
+
+          if (!conversationId) {
+            return res.status(400).json({ message: "conversationId is required" });
+          }
+
+          const conversation = await Conversation.findOne({
+            userId: user._id,
+            conversationId,
+          }).select("conversationId messages createdAt updatedAt");
+
+          if (!conversation) {
+            return res.status(404).json({ message: "Conversation not found" });
+          }
+
+          return res.status(200).json({
+            conversationId: conversation.conversationId,
+            messages: conversation.messages,
+            createdAt: conversation.createdAt,
+            updatedAt: conversation.updatedAt,
+          });
+        }
+      } catch (authError) {
+        if (authError.status) {
+          return res.status(authError.status).json({ message: authError.message });
+        }
+        throw authError;
+      }
+    }
+
     // Prompts endpoints - require auth
     if (pathname.startsWith("/api/prompts")) {
       try {
@@ -303,7 +473,20 @@ export default async (req, res) => {
             return res.status(400).json({ message: "Prompt is required" });
           }
 
-          const aiResponse = await sendPromptToOllama(prompt.trim());
+          // Fetch last 10 prompts for context
+          const history = await Prompt.find({ userId: user._id })
+            .sort({ createdAt: -1 })
+            .limit(10);
+
+          const messages = [];
+          // Reverse to get chronological order
+          history.reverse().forEach((item) => {
+            messages.push({ role: "user", content: item.prompt });
+            messages.push({ role: "assistant", content: item.response });
+          });
+          messages.push({ role: "user", content: prompt.trim() });
+
+          const aiResponse = await sendPromptToOllama(messages);
 
           const savedPrompt = await Prompt.create({
             userId: user._id,
@@ -367,6 +550,8 @@ export default async (req, res) => {
         if (pathname === "/api/auth/delete-account" && req.method === "DELETE") {
           // Delete all user's prompts
           await Prompt.deleteMany({ userId: user._id });
+          // Delete all user's conversations
+          await Conversation.deleteMany({ userId: user._id });
           // Delete all user's transactions
           await Transaction.deleteMany({ userId: user._id });
           // Delete user
@@ -434,7 +619,10 @@ export default async (req, res) => {
             subscriptionDuration: duration,
           });
 
-          return res.status(200).json({ sessionId: session.id });
+          return res.status(200).json({
+            sessionId: session.id,
+            checkoutUrl: session.url,
+          });
         }
 
         // POST /api/payment/success

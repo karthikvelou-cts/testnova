@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import Conversation from "../models/Conversation.js";
 import User from "../models/User.js";
 import Prompt from "../models/Prompt.js";
 import Transaction from "../models/Transaction.js";
@@ -68,7 +69,7 @@ export const login = asyncHandler(async (req, res) => {
 });
 
 export const getProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.userId);
+  const user = await User.findById(req.user._id);
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
@@ -86,10 +87,13 @@ export const getProfile = asyncHandler(async (req, res) => {
 });
 
 export const deleteAccount = asyncHandler(async (req, res) => {
-  const userId = req.userId;
+  const userId = req.user._id;
 
   // Delete all user's prompts
   await Prompt.deleteMany({ userId });
+
+  // Delete all user's conversations
+  await Conversation.deleteMany({ userId });
 
   // Delete all user's transactions
   await Transaction.deleteMany({ userId });

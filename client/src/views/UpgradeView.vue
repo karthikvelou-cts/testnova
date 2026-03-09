@@ -279,10 +279,13 @@ const upgradePlan = async (plan) => {
       throw new Error(data.message || 'Failed to create checkout session');
     }
 
-    // Redirect to Stripe checkout
-    if (data.sessionId) {
-      // In production, use Stripe's redirect
-      window.location.href = `https://checkout.stripe.com/pay/${data.sessionId}`;
+    // Redirect to Stripe-hosted checkout URL from backend
+    if (data.checkoutUrl) {
+      window.location.assign(data.checkoutUrl);
+    } else if (data.sessionId) {
+      window.location.assign(`https://checkout.stripe.com/c/pay/${data.sessionId}`);
+    } else {
+      throw new Error('Checkout URL missing from payment response');
     }
   } catch (error) {
     console.error('Error creating checkout session:', error);

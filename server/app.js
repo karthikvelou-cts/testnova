@@ -5,6 +5,7 @@ import morgan from "morgan";
 import { connectDB } from "./config/db.js";
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 import authRoutes from "./routes/authRoutes.js";
+import chatRoutes from "./routes/chatRoutes.js";
 import promptRoutes from "./routes/promptRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 
@@ -26,6 +27,7 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/chat", chatRoutes);
 app.use("/api/prompts", promptRoutes);
 app.use("/api/payment", paymentRoutes);
 

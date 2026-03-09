@@ -10,7 +10,20 @@ export const createPrompt = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Prompt is required" });
   }
 
-  const aiResponse = await sendPromptToOllama(prompt.trim());
+  // Fetch last 10 prompts for context to maintain continuity
+  const history = await Prompt.find({ userId: req.user._id })
+    .sort({ createdAt: -1 })
+    .limit(10);
+
+  const messages = [];
+  // Reverse to get chronological order (oldest first)
+  history.reverse().forEach((item) => {
+    messages.push({ role: "user", content: item.prompt });
+    messages.push({ role: "assistant", content: item.response });
+  });
+  messages.push({ role: "user", content: prompt.trim() });
+
+  const aiResponse = await sendPromptToOllama(messages);
 
   const savedPrompt = await Prompt.create({
     userId: req.user._id,

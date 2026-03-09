@@ -369,7 +369,7 @@ const handleUpgrade = async (plan) => {
     }
 
     // Initialize Stripe checkout
-    const response = await fetch('/api/payments/create-checkout-session', {
+    const response = await fetch('/api/payment/create-checkout-session', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -383,9 +383,12 @@ const handleUpgrade = async (plan) => {
 
     const data = await response.json();
     
-    if (data.sessionId) {
-      // Redirect to Stripe checkout
-      window.location.href = `https://checkout.stripe.com/pay/${data.sessionId}`;
+    if (data.checkoutUrl) {
+      window.location.assign(data.checkoutUrl);
+    } else if (data.sessionId) {
+      window.location.assign(`https://checkout.stripe.com/c/pay/${data.sessionId}`);
+    } else {
+      throw new Error('Checkout URL missing from payment response');
     }
   } catch (error) {
     console.error('Upgrade error:', error);
