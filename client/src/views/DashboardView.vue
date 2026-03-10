@@ -141,24 +141,32 @@
       <div class="border-t border-slate-800 bg-slate-900/50 backdrop-blur-sm p-6">
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <div class="flex gap-3 items-end">
-            <textarea
-              v-model="promptText"
-              @keydown="handlePromptKeydown"
-              placeholder="Ask me to generate code, write tests, or document your code... (Enter to send, Shift+Enter for new line)"
-              class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 resize-none focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
-              rows="3"
-              :disabled="isLoading || (isGuest && guestPromptsUsed >= 5)"
-            />
-            <button
-              type="button"
-              @click="toggleVoiceInput"
-              :disabled="!voiceSupported || isLoading || (isGuest && guestPromptsUsed >= 5)"
-              class="px-4 py-3 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-semibold"
-              :class="{ 'border-red-500 text-red-300': isListening }"
-              :title="voiceSupported ? (isListening ? 'Stop voice input' : 'Start voice input') : 'Voice input not supported in this browser'"
-            >
-              {{ isListening ? "Stop Mic" : "Mic" }}
-            </button>
+            <div class="relative flex-1">
+              <textarea
+                v-model="promptText"
+                @keydown="handlePromptKeydown"
+                placeholder="Ask me to generate code, write tests, or document your code... (Enter to send, Shift+Enter for new line)"
+                class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 pr-16 text-white placeholder-gray-500 resize-none focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+                rows="3"
+                :disabled="isLoading || (isGuest && guestPromptsUsed >= 5)"
+              />
+              <button
+                type="button"
+                @click="toggleVoiceInput"
+                :disabled="!voiceSupported || isLoading || (isGuest && guestPromptsUsed >= 5)"
+                class="absolute top-3 right-3 px-2 py-1 text-[11px] uppercase tracking-wide rounded-full border border-slate-700 bg-slate-900/60 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition font-semibold text-gray-300"
+                :class="{ 'border-red-500 text-red-300': isListening }"
+                :title="voiceSupported ? (isListening ? 'Stop voice input' : 'Start voice input') : 'Voice input not supported in this browser'"
+              >
+                <span v-if="isListening" class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-red-300 border-t-transparent" aria-hidden="true"></span>
+                <svg v-else class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
           <div class="flex justify-between items-center text-sm text-gray-400">
             <span v-if="isGuest && guestPromptsUsed >= 5" class="text-yellow-400">

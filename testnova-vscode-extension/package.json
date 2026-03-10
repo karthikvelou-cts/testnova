@@ -11,6 +11,8 @@
     "Testing"
   ],
   "activationEvents": [
+    "onView:testnova.sidebar",
+    "onCommand:testnova.openChat",
     "onCommand:testnova.generateTests",
     "onCommand:testnova.generateFromSelection",
     "onCommand:testnova.setApiBaseUrl",
@@ -20,6 +22,10 @@
   "main": "./extension.js",
   "contributes": {
     "commands": [
+      {
+        "command": "testnova.openChat",
+        "title": "TestNova: Open Chat"
+      },
       {
         "command": "testnova.generateTests",
         "title": "TestNova: Generate Unit Tests"
@@ -41,6 +47,24 @@
         "title": "TestNova: Clear Auth Token"
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "testnova",
+          "title": "TestNova",
+          "icon": "media/testnova.svg"
+        }
+      ]
+    },
+    "views": {
+      "testnova": [
+        {
+          "id": "testnova.sidebar",
+          "name": "Chat",
+          "type": "webview"
+        }
+      ]
+    },
     "submenus": [
       {
         "id": "testnova.submenu",
@@ -72,6 +96,9 @@
       ],
       "commandPalette": [
         {
+          "command": "testnova.openChat"
+        },
+        {
           "command": "testnova.generateTests"
         },
         {
@@ -88,6 +115,10 @@
         }
       ],
       "testnova.submenu": [
+        {
+          "command": "testnova.openChat",
+          "group": "0_chat"
+        },
         {
           "command": "testnova.generateTests",
           "group": "1_generate"
