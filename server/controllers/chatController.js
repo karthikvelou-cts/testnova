@@ -1,4 +1,5 @@
 import Conversation from "../models/Conversation.js";
+import Prompt from "../models/Prompt.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendPromptToOllama } from "../utils/ollamaClient.js";
 
@@ -43,6 +44,11 @@ export const chatWithMemory = asyncHandler(async (req, res) => {
   const assistantResponse = await sendPromptToOllama(contextMessages);
   conversation.messages.push({ role: "assistant", content: assistantResponse });
   await conversation.save();
+  await Prompt.create({
+    userId: req.user._id,
+    prompt: prompt.trim(),
+    response: assistantResponse,
+  });
 
   return res.status(200).json({ response: assistantResponse });
 });

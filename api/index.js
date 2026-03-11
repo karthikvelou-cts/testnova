@@ -380,6 +380,11 @@ export default async (req, res) => {
           const assistantResponse = await sendPromptToOllama(contextMessages);
           conversation.messages.push({ role: "assistant", content: assistantResponse });
           await conversation.save();
+          await Prompt.create({
+            userId: user._id,
+            prompt: prompt.trim(),
+            response: assistantResponse,
+          });
 
           return res.status(200).json({ response: assistantResponse });
         }
