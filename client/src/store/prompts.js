@@ -34,48 +34,57 @@ export const usePromptStore = defineStore("prompts", {
     loading: false,
     selectedModel: localStorage.getItem("selectedModel") || "mistral",
     availableModels: [
-      {
-        id: "mistral",
-        name: "Mistral 7B",
-        category: "code",
-        speed: "Fast",
-        description: "Fast and accurate for all languages",
-      },
-      {
-        id: "neural-chat",
-        name: "Neural Chat 7B",
-        category: "code",
-        speed: "Fast",
-        description: "Fast and accurate for all languages",
-      },
-      {
-        id: "codellama",
-        name: "Code Llama 13B",
-        category: "code",
-        speed: "Medium",
-        description: "Specialized for code generation and understanding",
-      },
-      {
-        id: "llama2",
-        name: "Llama 2 7B",
-        category: "test",
-        speed: "Fast",
-        description: "Comprehensive analysis for testing",
-      },
-      {
-        id: "deepseek-coder",
-        name: "Deepseek Coder 6.7B",
-        category: "code",
-        speed: "Fast",
-        description: "Advanced code understanding and generation",
-      },
-      {
-        id: "phind-codellama",
-        name: "Phind CodeLlama 34B",
-        category: "test",
-        speed: "Slow",
-        description: "Expert code reviews and documentation",
-      },
+      [
+        {
+          "id": "mistral",
+          "name": "Mistral 7B",
+          "category": "code",
+          "speed": "Fast",
+          "description": "Fast and accurate for all languages"
+        },
+        {
+          "id": "neural-chat",
+          "name": "Neural Chat 7B",
+          "category": "code",
+          "speed": "Fast",
+          "description": "Fast and accurate for all languages"
+        },
+        {
+          "id": "llama2",
+          "name": "Llama 2 7B",
+          "category": "test",
+          "speed": "Fast",
+          "description": "Comprehensive analysis for testing"
+        },
+        {
+          "id": "deepseek-coder",
+          "name": "Deepseek Coder 6.7B",
+          "category": "code",
+          "speed": "Fast",
+          "description": "Advanced code understanding and generation"
+        },
+        {
+          "id": "codellama",
+          "name": "Code Llama 13B",
+          "category": "code",
+          "speed": "Medium",
+          "description": "Specialized for code generation and understanding"
+        },
+        {
+          "id": "devstral-small-2",
+          "name": "Devstral Small 2 (24B)",
+          "category": "code",
+          "speed": "Medium",
+          "description": "Optimized for software development, debugging, and generating unit tests"
+        },
+        {
+          "id": "qwen3-coder-next",
+          "name": "Qwen3 Coder Next",
+          "category": "code",
+          "speed": "Medium",
+          "description": "Advanced coding model with strong reasoning and multi-language support"
+        }
+      ]
     ],
     pagination: {
       page: 1,
