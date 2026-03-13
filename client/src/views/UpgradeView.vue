@@ -31,7 +31,7 @@
           <ul class="space-y-4 mb-8 flex-1">
             <li class="flex items-start gap-3">
               <span class="text-green-400 mt-1">✓</span>
-              <span>2 AI Models</span>
+                <span>3 AI Models</span>
             </li>
             <li class="flex items-start gap-3">
               <span class="text-green-400 mt-1">✓</span>
@@ -80,7 +80,7 @@
           <ul class="space-y-4 mb-8 flex-1">
             <li class="flex items-start gap-3">
               <span class="text-green-400 mt-1">✓</span>
-              <span>4 AI Models</span>
+                <span>6 AI Models</span>
             </li>
             <li class="flex items-start gap-3">
               <span class="text-green-400 mt-1">✓</span>
@@ -126,7 +126,7 @@
           <ul class="space-y-4 mb-8 flex-1">
             <li class="flex items-start gap-3">
               <span class="text-green-400 mt-1">✓</span>
-              <span>All 6 AI Models</span>
+                <span>All 8 AI Models</span>
             </li>
             <li class="flex items-start gap-3">
               <span class="text-green-400 mt-1">✓</span>
@@ -183,9 +183,9 @@
               </tr>
               <tr class="border-b border-slate-700">
                 <td class="py-4 px-4">AI Models</td>
-                <td class="text-center">2</td>
-                <td class="text-center bg-blue-500/10">4</td>
-                <td class="text-center">6</td>
+                <td class="text-center">3</td>
+                <td class="text-center bg-blue-500/10">6</td>
+                <td class="text-center">8</td>
               </tr>
               <tr class="border-b border-slate-700">
                 <td class="py-4 px-4">Code Generation</td>

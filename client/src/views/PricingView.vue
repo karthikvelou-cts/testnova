@@ -201,7 +201,7 @@
               <td class="py-4">Available Models</td>
               <td class="text-center">3</td>
               <td class="text-center">6</td>
-              <td class="text-center">All (10+)</td>
+              <td class="text-center">All (8)</td>
             </tr>
             <tr class="border-b border-slate-700/50 hover:bg-slate-700/20 transition">
               <td class="py-4">Code Generation</td>

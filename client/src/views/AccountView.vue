@@ -167,9 +167,9 @@ const getPackageLimit = (plan) => {
 
 const getModelCount = (plan) => {
   const counts = {
-    free: '2',
-    super: '4',
-    premium: '6'
+    free: '3',
+    super: '6',
+    premium: '8'
   };
   return counts[plan] || '2';
 };

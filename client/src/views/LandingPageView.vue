@@ -95,7 +95,7 @@
           </div>
           <h3 class="text-xl font-semibold mb-3">Multiple Models</h3>
           <p class="text-gray-300">
-            Choose from Mistral, Llama 2, Code Llama, and more. Pick the best for your task.
+            Choose from Mistral, Devstral, Qwen3 Coder Next, and more. Pick the best for your task.
           </p>
         </div>
 
@@ -281,8 +281,11 @@
           <p class="text-gray-300 mb-4">Optimized for code generation and refactoring</p>
           <ul class="space-y-2 text-sm text-gray-400">
             <li>• <span class="font-semibold text-white">Mistral</span> - Fast & accurate for all languages</li>
+            <li>• <span class="font-semibold text-white">Neural Chat</span> - Fast, reliable coding help</li>
             <li>• <span class="font-semibold text-white">Code Llama</span> - Specialized for programming</li>
             <li>• <span class="font-semibold text-white">Deepseek Coder</span> - Advanced code understanding</li>
+            <li>• <span class="font-semibold text-white">Devstral Small 2</span> - Optimized for debugging and tests</li>
+            <li>• <span class="font-semibold text-white">Qwen3 Coder Next</span> - Strong reasoning across languages</li>
           </ul>
         </div>
         <div class="bg-slate-800/50 border border-slate-700 rounded-2xl p-8">
@@ -293,7 +296,6 @@
           <p class="text-gray-300 mb-4">Optimized for testing and documentation generation</p>
           <ul class="space-y-2 text-sm text-gray-400">
             <li>• <span class="font-semibold text-white">Llama 2</span> - Comprehensive analysis</li>
-            <li>• <span class="font-semibold text-white">Neural Chat</span> - Detailed explanations</li>
             <li>• <span class="font-semibold text-white">Phind</span> - Expert code reviews</li>
           </ul>
         </div>
